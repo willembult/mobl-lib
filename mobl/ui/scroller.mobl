@@ -3,7 +3,6 @@ module mobl::ui::scroller
 load js/jquery-watch.js
 load js/jquery-removeevent.js
 load js/iscroll-lite-min.js
- 
 
 control scroller() {
 	scrl@<div class="iScroll" style="width: 100%; position: absolute; overflow: auto;">elements()</div>
@@ -49,12 +48,12 @@ __ns.makeScrollable = function(elem) {
 			
 			$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
 				
-				__ns.updateScroller();
-				
 				/*
-				 * this introduces some weird issues when we're moving the scroller
-				 * before it's refreshed. just refresh immediately for now
+				 * delaying refresh until updates have stopped for at least 200ms.
 				 *
+				 * this introduces some weird issues when we're moving the scroller
+				 * before it's refreshed, may want to find a different solution at some point
+				 */
 				var curRefreshCount = refreshCount++;
 				
 				setTimeout(function() {
@@ -63,9 +62,7 @@ __ns.makeScrollable = function(elem) {
 					}
 					
 					refreshCount--;
-				}, 200);
-				*
-				*/				
+				}, 200);				
 				
 			});
 			
