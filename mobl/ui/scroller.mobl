@@ -1,0 +1,113 @@
+module mobl::ui::scroller
+
+load js/jquery-watch.js
+load js/jquery-removeevent.js
+load js/iscroll-lite-min.js
+ 
+
+control scroller() {
+	scrl@<div class="iScroll" style="width: 100%; position: absolute; overflow: auto;">elements()</div>
+	
+	script {
+		async {
+			while (scrl.parent().parent().length == 0) {
+				sleep(50);
+			}
+			
+			makeScrollable(scrl); 
+		}
+	}
+}
+
+external sync function makeScrollable(elem : JQuery) : void
+external sync function scrollTo(x : Num, y : Num, delay : Num, relative : Bool) : void
+external sync function updateScroller() : void
+external sync function destroyScroller() : void
+<javascript>
+var scroller; 
+
+__ns.makeScrollable = function(elem) {
+	elem.css("top", elem.offset().top + "px");
+	elem.css("bottom", "0px");
+	
+	setTimeout(function() {
+		scroller = new iScroll(elem[0], {
+			hScroll: false
+			
+			/* 
+			snap: "li"
+			pullToRefresh: onpulldown ? "down" : false,
+			onPullDown: function() {
+				$(".iScrollPullDownIcon").append(icon).append("<span>  </span>");
+				onpulldown(event);
+			}*/
+		});
+				
+		// node inserted into DOM
+		elem.bind('DOMNodeInserted', function(e) {
+			var refreshCount = 0;
+			
+			$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
+				
+				__ns.updateScroller();
+				
+				/*
+				 * this introduces some weird issues when we're moving the scroller
+				 * before it's refreshed. just refresh immediately for now
+				 *
+				var curRefreshCount = refreshCount++;
+				
+				setTimeout(function() {
+					if (refreshCount === 1) {
+						__ns.updateScroller();
+					}
+					
+					refreshCount--;
+				}, 200);
+				*
+				*/				
+				
+			});
+			
+			__ns.updateScroller();		
+		});
+		
+		// node removed from DOM
+		elem.bind('DOMNodeRemoved', function(e) {
+			$(e.target).unwatch();
+		});
+		
+		elem.bind('remove', function(e) {
+			if (e.target === this) {
+				__ns.destroyScroller();
+			}			
+		});
+		
+		$(window).bind('resize', function() {
+			__ns.updateScroller();
+		});
+		
+	}, 0);
+	
+};
+
+__ns.updateScroller = function() {
+	setTimeout(function() {
+		if (scroller) {
+			scroller.refresh();
+		}
+	}, 0);
+};
+
+__ns.scrollTo = function(x, y, delay, relative) {
+	scroller.scrollTo(x, y, delay, relative);
+};
+
+__ns.destroyScroller = function() {
+	if (scroller) {
+		scroller.destroy();
+		scroller = null;
+	}
+};
+</javascript>
+
