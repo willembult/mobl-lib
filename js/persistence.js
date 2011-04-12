@@ -996,7 +996,7 @@ persistence.get = function(arg1, arg2) {
       if(type) {
         switch(type) {
         case 'DATE':
-          return new Date(value * 1000);
+          return new Date(value); // * 1000);
           break;
         default:
           return value;
@@ -1012,7 +1012,7 @@ persistence.get = function(arg1, arg2) {
         case 'DATE':
           if(value) {
             value = new Date(value);
-            return Math.round(value.getTime() / 1000);
+            return Math.round(value.getTime()); // / 1000);
           } else {
             return null;
           }
