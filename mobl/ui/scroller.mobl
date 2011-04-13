@@ -57,6 +57,7 @@ __ns.setupScroller = function(elem) {
 	
 	// update scroller on window resize	
 	$(window).bind('resize', function() {
+		screen.css("height", window.innerHeight);
 		__ns.updateScroller();
 	});
 		
