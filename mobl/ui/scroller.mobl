@@ -1,34 +1,65 @@
 module mobl::ui::scroller
 
 load js/jquery-watch.js
-load js/jquery-removeevent.js
-load js/iscroll-lite-min.js
+load js/iscroll-lite-min.js 
 
 control scroller() {
-	scrl@<div class="iScroll" style="width: 100%; position: absolute; overflow: auto;">elements()</div>
+	scrl@<div style="width: 100%; position: absolute; overflow: auto;">elements()</div>
 	
-	script {
+	script {     
 		async {
 			while (scrl.parent().parent().length == 0) {
 				sleep(50);
 			}
 			
-			makeScrollable(scrl); 
+			setupScroller(scrl); 
 		}
 	}
 }
 
-external sync function makeScrollable(elem : JQuery) : void
+external sync function setupScroller(elem : JQuery) : void
 external sync function scrollTo(x : Num, y : Num, delay : Num, relative : Bool) : void
 external sync function updateScroller() : void
 external sync function destroyScroller() : void
 <javascript>
-var scroller; 
+var scroller;
 
-__ns.makeScrollable = function(elem) {
+__ns.setupScroller = function(elem) {
 	elem.css("top", elem.offset().top + "px");
 	elem.css("bottom", "0px");
 	
+	var screen = elem.parents("div.screen");
+	screen.css("height", window.innerHeight);
+
+	// when content gets added, update	
+	elem.bind('DOMNodeInserted', function(e) {
+		/*
+		$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
+			__ns.updateScroller();				
+		});*/
+		
+		__ns.updateScroller();		
+	});
+	
+	// when content gets removed, update
+	elem.bind('DOMNodeRemoved', function(e) {
+		//$(e.target).unwatch();
+		
+		// last child elem is iScroll-internal div,
+		// if that gets removed we're destroyed
+		if (e.target.iscroll !== undefined) {
+			delete e.target.iscroll;
+			__ns.destroyScroller();
+		} else {			
+			__ns.updateScroller();
+		}		
+	});
+	
+	// update scroller on window resize	
+	$(window).bind('resize', function() {
+		__ns.updateScroller();
+	});
+		
 	setTimeout(function() {
 		scroller = new iScroll(elem[0], {
 			hScroll: false
@@ -39,61 +70,26 @@ __ns.makeScrollable = function(elem) {
 			onPullDown: function() {
 				$(".iScrollPullDownIcon").append(icon).append("<span>  </span>");
 				onpulldown(event);
-			}*/
-		});
-				
-		// node inserted into DOM
-		elem.bind('DOMNodeInserted', function(e) {
-			var refreshCount = 0;
-			
-			$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
-				
-				/*
-				 * delaying refresh until updates have stopped for at least 200ms.
-				 *
-				 * this introduces some weird issues when we're moving the scroller
-				 * before it's refreshed, may want to find a different solution at some point
-				 */
-				var curRefreshCount = refreshCount++;
-				
-				setTimeout(function() {
-					if (refreshCount === 1) {
-						__ns.updateScroller();
-					}
-					
-					refreshCount--;
-				}, 200);				
-				
-			});
-			
-			__ns.updateScroller();		
+			 }*/
 		});
 		
-		// node removed from DOM
-		elem.bind('DOMNodeRemoved', function(e) {
-			$(e.target).unwatch();
-		});
-		
-		elem.bind('remove', function(e) {
-			if (e.target === this) {
-				__ns.destroyScroller();
-			}			
-		});
-		
-		$(window).bind('resize', function() {
-			__ns.updateScroller();
-		});
-		
-	}, 0);
-	
+		elem.children().last()[0].iscroll = scroller;
+	}, 0);		
 };
 
+__ns.updateCount = 0;
 __ns.updateScroller = function() {
+	var curUpdateCount = __ns.updateCount++;
+				
 	setTimeout(function() {
-		if (scroller) {
-			scroller.refresh();
+		if (__ns.updateCount === 1) {
+			if (scroller) {
+				scroller.refresh();
+			}
 		}
-	}, 0);
+		
+		__ns.updateCount--;
+	}, 250);
 };
 
 __ns.scrollTo = function(x, y, delay, relative) {
