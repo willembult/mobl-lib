@@ -40,7 +40,6 @@
  
 module mobl::ui::gluePanel
 
-import mobl
 import mobl::ui::generic
 
 
@@ -104,7 +103,7 @@ control gluePanel(style : Style = null, spaceAbove : Num = -1, spaceBelow : Num 
 			
 			// calculate top and bottom margins
 			topMargin = (spaceAbove == -1) ? view.offset().top : spaceAbove;
-			bottomMargin = (spaceBelow == -1) ? getScreen().height() - view.offset().top : spaceBelow;
+			bottomMargin = (spaceBelow == -1) ? getScreen().height() - view.offset().top - view.height(): spaceBelow;
 						
 			// set the top in case it was specified.
 			// since we're relatively positioned, the top value is the difference
