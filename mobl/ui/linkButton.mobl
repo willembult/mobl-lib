@@ -83,7 +83,7 @@ control linkButton(link : String, onclick : Callback = null, style : Style = but
 		lnk.bind("click", {
 			if (lnk.attr("href") == "javascript:void(0);") {
 				if (null != onclick ? onclick(event) : true) {
-					// temporarily modified href to the actual link and fires click
+					// temporarily modifies href to the actual link and fires click
 					$(event.currentTarget).attr("href", link);
 					fireMouseEvent(event.currentTarget, "click");		
 					$(event.currentTarget).attr("href","javascript:void(0);");
