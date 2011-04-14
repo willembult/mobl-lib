@@ -23,21 +23,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
  
+/**
+ * Scroller shows it's content in a scrollable element that takes
+ * up all available space in its first relatively or absolutely 
+ * positioned parent. 
+ */
+ 
 module mobl::ui::scroller
+import mobl::ui::gluePanel
 
 load js/jquery-watch.js
 load js/iscroll-lite-min.js 
 
 control scroller() {
-	scrl@<div style="width: 100%; position: absolute; overflow: auto;">elements()</div>
-	
-	script {     
-		async {
-			while (scrl.parent().parent().length == 0) {
-				sleep(50);
+	// Use a glue panel to take up all available space
+	gluePanel() {
+		scrl@<div style="position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px; overflow: auto;">elements()</div>
+		
+		script {     
+			async {
+				setupScroller(scrl); 
 			}
-			
-			setupScroller(scrl); 
 		}
 	}
 }
@@ -50,12 +56,6 @@ external sync function destroyScroller() : void
 var scroller;
 
 __ns.setupScroller = function(elem) {
-	elem.css("top", elem.offset().top + "px");
-	elem.css("bottom", "0px");
-	
-	var screen = elem.parents("div.screen");
-	screen.css("height", window.innerHeight);
-
 	// when content gets added, update	
 	elem.bind('DOMNodeInserted', function(e) {
 		/*
@@ -82,7 +82,6 @@ __ns.setupScroller = function(elem) {
 	
 	// update scroller on window resize	
 	$(window).bind('resize', function() {
-		screen.css("height", window.innerHeight);
 		__ns.updateScroller();
 	});
 		
@@ -101,7 +100,7 @@ __ns.setupScroller = function(elem) {
 		
 		elem.children().last()[0].iscroll = scroller;
 	}, 0);		
-};
+}; 
 
 __ns.updateCount = 0;
 __ns.updateScroller = function() {

@@ -1,0 +1,149 @@
+/**
+ * Copyright (c) 2011 Willem Bult <willem.bult@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+ 
+/**
+ * Control that makes its contents take up all available space in 
+ * the window, with optional specifiable space above and below. 
+ * If spaceAbove or spaceBelow are -1, they will be auto calculated
+ * to fit the elements before and after the control.
+ *
+ * This can be used for example to size and position content between
+ * a top and a bottom toolbar, or to constrain a scrollable control
+ * to the size of the window.
+ *
+ * Takes into consideration heights of iOS devices to hide mobile
+ * browser address bar. 
+ *
+ */
+ 
+module mobl::ui::gluePanel
+
+import mobl::ui::generic
+
+
+control gluePanel(style : Style = null, spaceAbove : Num = -1, spaceBelow : Num = -1) {
+	// The view is positioned relatively, so that absolutely positioned children 
+	// will be positioned in this coordinate space
+	view@<div style="width: 100%; position: relative;" class=style ? style : "">elements()</div>
+	
+	// variable that maintain the vertical margins around the panel
+	var topMargin : Num = 0
+	var bottomMargin : Num = 0
+
+	// Make the view take up all available height 
+	function makeFullScreenHeight() : void {
+		
+		// Safari on iOS hides the address bar only if the page is 
+		// too high to be shown without scrollbar if the bar is showing.
+		
+		// In case the address bar is shown in Safari on iOS, 
+		// window.innerHeight will not return all available space,
+		// but will already take the space taken up by the bar
+		// into consideration.
+		var deviceHeight = 0;
+		
+		if (isIphone()) {
+			if (isPortrait())  {
+				deviceHeight = 416;
+			} else {
+				deviceHeight = 268;
+			}
+		}
+		
+		if (isIpad()) {
+			if (isPortrait()) {
+				deviceHeight = 960;
+			} else {
+				deviceHeight = 704;
+			}
+		}
+		
+		// calculate the height, possibly overriding the innerHeight if the 
+		// known window height is higher
+		// since we're relatively positioned, the top attribute it the difference between
+		var height = Math.max(window.innerHeight - topMargin - bottomMargin, deviceHeight - topMargin - bottomMargin);
+		
+		// set height to be min-height (elements might possibly take up more space)
+		view.css("min-height", height + "px");
+		
+		// scroll to top of page to be sure iPhone hides address bar
+		scrollToTop(); 
+	}
+	
+	// Make the window full height
+	script { 
+		async {
+			// we have to wait for the element to be attached to the DOM tree
+			// in order to see what it's default position is		
+			while (!isAttached(view)) {
+				sleep(50);
+			}
+			
+			// calculate top and bottom margins
+			topMargin = (spaceAbove == -1) ? view.offset().top : spaceAbove;
+			bottomMargin = (spaceBelow == -1) ? $(".screen").height() - view.offset().top : spaceBelow;
+						
+			// set the top in case it was specified
+			// since we're absolutely positioned, the top value is the difference
+			// between the default position and the desired position
+			view.css("top", topMargin - view.offset().top);
+			
+			// monitor screen resizes			
+			onScreenResize({makeFullScreenHeight();});
+			
+			// apply height changes
+			makeFullScreenHeight();			
+		}
+		
+	}
+}
+
+external sync function scrollToTop() : void
+<javascript>
+__ns.scrollToTop = function() {
+	if (window.scrollTo !== undefined) {
+		window.scrollTo(0,1);
+	}
+};
+</javascript>
+
+external sync function isAttached(elem : JQuery) : Bool
+<javascript>
+__ns.isAttached = function(elem) {
+	return elem.parents("body").length > 0;
+};
+</javascript>
+
+
+external sync function onScreenResize(cb : Callback) : void
+<javascript>
+__ns.onScreenResize = function(cb) {
+	$(window).bind("resize", function(ev) {
+		if (ev.target === this) {
+			cb(ev);
+		}
+	});
+};
+</javascript>
