@@ -40,6 +40,7 @@
  
 module mobl::ui::gluePanel
 
+import mobl
 import mobl::ui::generic
 
 
@@ -82,10 +83,10 @@ control gluePanel(style : Style = null, spaceAbove : Num = -1, spaceBelow : Num 
 		
 		// calculate the height, possibly overriding the innerHeight if the 
 		// known window height is higher
-		// since we're relatively positioned, the top attribute it the difference between
 		var height = Math.max(window.innerHeight - topMargin - bottomMargin, deviceHeight - topMargin - bottomMargin);
 		
-		// set height to be min-height (elements might possibly take up more space)
+		// set height to be min-height. use min-height instead of 
+		// height as elements might possibly take up more space
 		view.css("min-height", height + "px");
 		
 		// scroll to top of page to be sure iPhone hides address bar
@@ -103,10 +104,10 @@ control gluePanel(style : Style = null, spaceAbove : Num = -1, spaceBelow : Num 
 			
 			// calculate top and bottom margins
 			topMargin = (spaceAbove == -1) ? view.offset().top : spaceAbove;
-			bottomMargin = (spaceBelow == -1) ? $(".screen").height() - view.offset().top : spaceBelow;
+			bottomMargin = (spaceBelow == -1) ? getScreen().height() - view.offset().top : spaceBelow;
 						
-			// set the top in case it was specified
-			// since we're absolutely positioned, the top value is the difference
+			// set the top in case it was specified.
+			// since we're relatively positioned, the top value is the difference
 			// between the default position and the desired position
 			view.css("top", topMargin - view.offset().top);
 			
@@ -133,6 +134,14 @@ external sync function isAttached(elem : JQuery) : Bool
 <javascript>
 __ns.isAttached = function(elem) {
 	return elem.parents("body").length > 0;
+};
+</javascript>
+
+
+external sync function getScreen() : JQuery
+<javascript>
+__ns.getScreen = function(cb) {
+	return $(mobl.getCurrentScreen().dom);
 };
 </javascript>
 
