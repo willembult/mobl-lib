@@ -947,7 +947,7 @@ __ns.call = function (screenName, args, callback) {
 
     screenFrame.subs = screenTemplate.apply(null, args.concat( [ function (node) {
         node.attr('id', screenFrame.div);
-        node.css('position', 'absolute').css('top', '0').css('left', '0').css('width', '100%').css('height', '100%');
+        node.css('position', 'absolute').css('top', '0').css('left', '0').css('width', '100%');
         screenFrame.dom = node;
         if (screenContext.screens.length > 1) {
           var previousScreen = screenContext.screens[screenContext.screens.length - 2];
