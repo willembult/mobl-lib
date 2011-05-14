@@ -46,7 +46,7 @@ control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArr
 					if(pushed) {
 						pushed = false;
 						onclick(event);
-    				}
+				}
 				}
 			onmouseout=
 				{

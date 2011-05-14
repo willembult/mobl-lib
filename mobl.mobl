@@ -70,7 +70,16 @@ external type RegExp : Object {
     sync function compile(regexp : RegExp, modifier : String) : void
     sync function exec(string : String) : [String]
     sync function test(string : String) : Bool
+    static sync function fromString(regex : String) : RegExp
 }
+
+<javascript for=RegExp>
+__ns.RegExp = {
+  fromString: function(regexp) {
+    return new RegExp(regexp);
+  }
+};
+</javascript>
 
 external type Array<T> {
   length : Num
@@ -380,6 +389,7 @@ external type JQuery : Dynamic {
   sync function hasClass(cssClass : String) : Bool
   sync function css(name : String, val : String) : JQuery
   sync function html() : String
+  sync function text() : String
   sync function val() : String
   sync function is(what : String) : Bool
 
@@ -404,6 +414,11 @@ external type JQueryPosition {
   top  : Num
   left : Num
 }
+
+external sync function dyn(o : Object) : Dynamic
+<javascript for=dyn>
+__ns.dyn = function(o) { return o; };
+</javascript>
 
 external sync function $(sel : String) : JQuery
 
@@ -538,7 +553,7 @@ mobl.log = function(s, _, callback) {
 };
 
 __ns.parseNum = function(s) {
-  return parseInt(s, 10);
+  return parseFloat(s, 10);
 };
 
 __ns.escape = function(s) {
@@ -632,8 +647,14 @@ mobl.formatDate = function(date) {
 
 mobl.range = function(from, to) {
   var ar = [];
-  for(var i = from; i < to; i++) {
-    ar.push(i);
+  if(from <= to) {
+    for(var i = from; i < to; i++) {
+      ar.push(i);
+    }
+  } else {
+    for(var i = from; i > to; i--) {
+      ar.push(i);
+    }
   }
   return ar;
 };
@@ -668,6 +689,7 @@ mobl.defineType = function(qid, SuperType, fields) {
       }
     }
   }
+  Type.prototype = SuperType ? new SuperType() : new persistence.Observable();
   for(var prop in fields) {
     if(fields.hasOwnProperty(prop)) {
       (function() {
@@ -686,7 +708,6 @@ mobl.defineType = function(qid, SuperType, fields) {
       }());
     }
   }
-  Type.prototype = SuperType ? new SuperType() : new persistence.Observable();
   Type.fromJSON = function(json) {
     return new Type(json);
   };
@@ -901,7 +922,7 @@ __ns.call = function (screenName, args, callback) {
         args: args,
         callback: callback,
         div: screenName.replace(/\./g, '__'),
-        dom: null
+        dom: $("<div>")
     };
     if(!screenName.match(/\.root$/)) {
       location.hash = "" + Math.round(Math.random() * 99999);
@@ -1161,6 +1182,31 @@ mobl.implementInterface = function(sourceModule, targetModule, items) {
       return obj;
     };
 
+    var batchedEvents = [];
+
+    function processEvents() {
+      var toTrigger = [];
+      for(var i = 0; i < batchedEvents.length; i++) {
+        var ev = batchedEvents[i];
+        var found = false;
+        for(var j = 0; j < toTrigger.length; j++) {
+          var ev2 = toTrigger[j];
+          if(ev.obj === ev2.obj && ev.eventType === ev2.eventType) {
+            found = true;
+            break;
+          }
+        }
+        if(!found) {
+          toTrigger.push(ev);
+        }
+      }
+      for(i = 0; i < toTrigger.length; i++) {
+        var ev = toTrigger[i];
+        ev.fn.apply(null, ev.args);
+      }
+      batchedEvents = [];
+    }
+
     function CompSubscription(name) {
       this.subscriptions = [];
       this.name = name;
@@ -1168,6 +1214,26 @@ mobl.implementInterface = function(sourceModule, targetModule, items) {
 
     CompSubscription.prototype.addSub = function(sub) {
       if(sub) {
+        if(sub.node && (sub.eventType.indexOf('change') !== -1 || sub.eventType.indexOf('key') !== -1)) {
+          var fn = sub.fn;
+          sub.unsubscribe();
+          sub = mobl.domBind(sub.node, sub.eventType, function() {
+            batchedEvents.push({obj: sub.node, eventType: sub.eventType, fn: fn, args: Array.prototype.slice.call(arguments)});
+            if(batchedEvents.length === 1) {
+              setTimeout(processEvents, 300);
+            }
+          });
+        } else if(sub.obj && sub.obj._filter && (sub.eventType.indexOf('change') !== -1 || sub.eventType.indexOf('key') !== -1)) {
+          var fn = sub.fn;
+          sub.unsubscribe();
+          sub = sub.obj.addEventListener(sub.eventType, function() {
+            batchedEvents.push({obj: sub.obj, eventType: sub.eventType, fn: fn, args: Array.prototype.slice.call(arguments)});
+            if(batchedEvents.length === 1) {
+              setTimeout(processEvents, 300);
+            }
+          });
+        }
+
         this.subscriptions.push(sub);
       }
     };
@@ -1179,7 +1245,6 @@ mobl.implementInterface = function(sourceModule, targetModule, items) {
       this.subscriptions = [];
     };
 
-
     function DomSubscription(node, eventType, fn) {
       this.node = node;
       this.eventType = eventType;
@@ -1188,6 +1253,10 @@ mobl.implementInterface = function(sourceModule, targetModule, items) {
 
     DomSubscription.prototype.unsubscribe = function() {
       this.node.unbind(this.eventType, this.fn);
+    };
+
+    DomSubscription.prototype.equals = function(o) {
+      return this.node === o.node && this.eventType === o.eventType && this.fn === o.fn;
     };
 
     mobl.domBind = function(node, eventType, fn) {

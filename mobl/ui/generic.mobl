@@ -159,10 +159,11 @@ control button(text : String, style : Style = buttonStyle, pushedStyle : Style =
 
 
 style mixin sideButtonMixin($fromColor, $toColor) {
-  position: absolute;
-  right: 0.4em;
-  padding: 0.3em 0.8em 0.3em 0.8em;
+  float: right;
+  padding: 0.25em 0.8em 0.25em 0.8em;
   margin-top: -0.2em;
+  margin-bottom: -0.2em;
+  margin-left: 0.5em;
   font-weight: bold;
   color: $textButtonColor;
   boxShadowMixin(0px, 0px, 3px, #777777);
@@ -491,19 +492,23 @@ style activeTabStyle {
 }
 
 @doc "A tabset, takes a list of tuples as argument, e.g. [(\"Tab 1\", \"icon url\", tab1), (\"Tab 2\", \"icon uri\", tab2)] where tab1 and tab2 are controls with no arguments"
-control tabSet(tabs : [(String, String, Control)]) {
-  var activeTabName : String = tabs.get(0)._1
+control tabSet(tabs : [(String, String, Control)], activeTab : String = null) {
+  script {
+    if(activeTab == null) {
+      activeTab = tabs[0]._1;
+    }
+  }
   var s = ""
 
   block(tabbarStyle) {
     list((tabName, tabIcon, tabControl) in tabs) {
-      span(onclick={ activeTabName = tabName; }, cssClass=activeTabName == tabName ? activeTabButtonStyle : inActiveTabButtonStyle) {
+      span(onclick={ activeTab = tabName; }, cssClass=activeTab == tabName ? activeTabButtonStyle : inActiveTabButtonStyle) {
         label(tabName)
       }
     }
   }
   list((tabName, tabIcon, tabControl) in tabs) {
-    block(activeTabName == tabName ? activeTabStyle : inActiveTabStyle) {
+    block(activeTab == tabName ? activeTabStyle : inActiveTabStyle) {
       screenContext {
         tabControl()
       }
@@ -614,8 +619,8 @@ control masterDetail(items : Collection<Dynamic>, masterItem : Control1<Dynamic>
 }
 
 screen detailScreen(it : Dynamic, detail : Control1<Dynamic>) {
-  header("Detail") {
-    backButton("Back", onclick={ screen return; })
+  header(_("Detail")) {
+    backButton(_("Back"), onclick={ screen return; })
   }
   detail(it)
 }
@@ -687,19 +692,17 @@ style loadMoreStyle {
   -moz-border-radius-bottomright: 20px;
 }
 
-control stagedList(coll : Collection<?>, listCtrl : Control1<?>, initialItems : Num = 10, step : Num = 10, moreLabel : String = _("More")) {
+control stagedList(coll : Collection<?>, listCtrl : Control1<?>, initialItems : Num = 10, step : Num = 10, moreLabel : String = _("More"), moreStyle : Style = loadMoreStyle) {
   var n : Num = initialItems
-  var total : Num = coll.count()
-  group {
-    list(it in coll limit n) {
-      item(onclick={}) { listCtrl(it) }
-    }
-    when(n < total) {
-      <li class=loadMoreStyle onclick={
-          n = n + step;
-        }>
-        label(moreLabel)
-      </li>
+  var total = coll.count()
+  list(it in coll limit n) {
+    listCtrl(it)
+  }
+  when(n < total) {
+    block(moreStyle, onclick={
+        n = n + step;
+      }) {
+      label(moreLabel)
     }
   }
 }
@@ -960,25 +963,34 @@ style trStyle tdStyle:last-child {
   border-right: 1px solid #000;
 }
 
+style trStyle:first-child tdStyle {
+  border-top: 1px solid #000;
+}
+
+style trStyle:last-child tdStyle {
+  border-bottom: 1px solid #000;
+}
+
+
 @doc "Renders a table, use row { } for rows and cell { } for cells"
-control table() {
-  <table class=tableStyle>elements()</table>
+control table(style : Style = tableStyle) {
+  <table class=style>elements()</table>
 }
 
-control row() {
-  <tr class=trStyle>elements()</tr>
+control row(style : Style = trStyle) {
+  <tr class=style>elements()</tr>
 }
 
-control cell(width : String = null) {
-  <td width=width class=tdStyle>elements()</td>
+control cell(width : String = null, style : Style = tdStyle) {
+  <td width=width class=style>elements()</td>
 }
 
-control col(width : String = null) {
-  <td width=width class=tdStyle>elements()</td>
+control col(width : String = null, style : Style = tdStyle) {
+  <td width=width class=style>elements()</td>
 }
 
-control headerCol(width : String = null) {
-  <td width=width class=tdStyle><strong>elements()</strong></td>
+control headerCol(width : String = null, style : Style = tdStyle) {
+  <td width=width class=style><strong>elements()</strong></td>
 }
 
 // SCROLLERS, disabled ATM

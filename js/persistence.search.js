@@ -56,7 +56,7 @@ persistence.search.config = function(persistence, dialect) {
    * Does extremely basic tokenizing of text. Also includes some basic stemming.
    */
   function searchTokenizer(text) {
-    var words = text.toLowerCase().split(/\W+/);
+    var words = text.toLowerCase().split(/[^\w\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+/);
     var wordDict = {};
     // Prefixing words with _ to also index Javascript keywords and special fiels like 'constructor'
     for(var i = 0; i < words.length; i++) {
@@ -83,7 +83,7 @@ persistence.search.config = function(persistence, dialect) {
     var sqlParts = [];
     var restrictedToColumn = null;
     for(var i = 0; i < words.length; i++) {
-      var word = normalizeWord(words[i], !prefixByDefault);
+      var word = normalizeWord(words[i]);
       if(!word) {
         continue;
       }
@@ -105,7 +105,7 @@ persistence.search.config = function(persistence, dialect) {
       sql += ')';
       sqlParts.push(sql);
     }
-    return sqlParts;
+    return sqlParts.length === 0 ? ["1=1"] : sqlParts;
   }
 
   var queryCollSubscribers = {}; // entityName -> subscription obj

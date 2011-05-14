@@ -413,6 +413,7 @@ persistence.get = function(arg1, arg2) {
                 persistence.defineProp(that, ref, function(val) {
                     // setterCallback
                     var oldValue = that._data[ref];
+                    var oldValueObj = that._data_obj[ref] || session.trackedObjects[that._data[ref]];
                     if (val == null) {
                       that._data[ref] = null;
                       that._data_obj[ref] = undefined;
@@ -431,6 +432,23 @@ persistence.get = function(arg1, arg2) {
                     that._dirtyProperties[ref] = oldValue;
                     that.triggerEvent('set', that, ref, val);
                     that.triggerEvent('change', that, ref, val);
+                    // Inverse
+                    if(meta.hasOne[ref].inverseProperty) {
+                      var newVal = that[ref];
+                      if(newVal) {
+                        var inverse = newVal[meta.hasOne[ref].inverseProperty];
+                        if(inverse.list && inverse._filter) {
+                          inverse.triggerEvent('change', that, ref, val);
+                        }
+                      }
+                      if(oldValueObj) {
+                        console.log("OldValue", oldValueObj);
+                        var inverse = oldValueObj[meta.hasOne[ref].inverseProperty];
+                        if(inverse.list && inverse._filter) {
+                          inverse.triggerEvent('change', that, ref, val);
+                        }
+                      }
+                    }
                   }, function() {
                     // getterCallback
                     if (!that._data[ref]) {
@@ -950,9 +968,10 @@ persistence.get = function(arg1, arg2) {
         }
       }
 
-      Entity.hasOne = function (refName, otherEntity) {
+      Entity.hasOne = function (refName, otherEntity, inverseProperty) {
         meta.hasOne[refName] = {
-          type: otherEntity
+          type: otherEntity,
+          inverseProperty: inverseProperty
         };
         if (otherEntity.meta.isMixin)
           meta.fields[refName + "_class"] = persistence.typeMapper ? persistence.typeMapper.classNameType : "TEXT";
@@ -996,7 +1015,11 @@ persistence.get = function(arg1, arg2) {
       if(type) {
         switch(type) {
         case 'DATE':
-          return new Date(value); // * 1000);
+          if(typeof value === 'number') {
+            return new Date(value);
+          } else {
+            return null;
+          }
           break;
         default:
           return value;
@@ -1012,7 +1035,7 @@ persistence.get = function(arg1, arg2) {
         case 'DATE':
           if(value) {
             value = new Date(value);
-            return Math.round(value.getTime()); // / 1000);
+            return Math.round(value.getTime());
           } else {
             return null;
           }
