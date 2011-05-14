@@ -24,9 +24,8 @@
  */
  
 module mobl::ui::tabledList
-
+ 
 import mobl::ui::generic
-mixin mobl::ui::stylemixin
 
 control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArrow : Bool = false, style : Style = itemStyle, pushedStyle : Style = itemPushedStyle) {
 	var pushed : Bool = false
@@ -40,15 +39,13 @@ control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArr
 			ontouchdown=
 				{
 					event.preventDefault();
-    				pushed = true;
+					pushed = onclick ? true : false;
 				} 
 			ontouchup=
 				{
 					if(pushed) {
 						pushed = false;
-						if (onclick) {
-							onclick(event);
-						}
+						onclick(event);
     				}
 				}
 			onmouseout=
@@ -74,6 +71,7 @@ style mixin tabledItemMixin() {
 	margin: 0px 8px 0px 8px;
 	border-style: solid;
 	border-width: 1px 1px 0px 1px;
+	border-color: #ccc;
 }
 
 style tabledItemStyle {
@@ -86,23 +84,43 @@ style tabledItemPushedStyle {
 
 
 style tabledItemStyle:first-child {
-	topBorderRadiusMixin(6px);
+	-moz-border-radius-topleft: 6px;
+	-webkit-border-top-left-radius: 6px;
+	border-top-left-radius: 6px;
+	-moz-border-radius-topright: 6px;
+	-webkit-border-top-right-radius: 6px;
+	border-top-right-radius: 6px;
 	margin-top: 8px;
 }
 
 style tabledItemStyle:last-child {
-	bottomBorderRadiusMixin(6px);
+	-moz-border-radius-bottomleft: 6px;
+	-webkit-border-bottom-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+	-moz-border-radius-bottomright: 6px;
+	-webkit-border-bottom-right-radius: 6px;
+	border-bottom-right-radius: 6px;
 	border-width: 1px 1px 1px 1px;
 	margin-bottom: 8px;
 }
 
 style tabledItemPushedStyle:first-child {
-	topBorderRadiusMixin(6px);
+	-moz-border-radius-topleft: 6px;
+	-webkit-border-top-left-radius: 6px;
+	border-top-left-radius: 6px;
+	-moz-border-radius-topright: 6px;
+	-webkit-border-top-right-radius: 6px;
+	border-top-right-radius: 6px;
 	margin-top: 8px;
 }
 
 style tabledItemPushedStyle:last-child {
-	bottomBorderRadiusMixin(6px);	
+	-moz-border-radius-bottomleft: 6px;
+	-webkit-border-bottom-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+	-moz-border-radius-bottomright: 6px;
+	-webkit-border-bottom-right-radius: 6px;
+	border-bottom-right-radius: 6px;
 	border-width: 1px 1px 1px 1px;
 	margin-bottom: 8px;
 }

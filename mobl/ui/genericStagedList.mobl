@@ -1,0 +1,68 @@
+/**
+ * Copyright (c) 2011 Willem Bult <willem.bult@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+ 
+module mobl::ui::genericStagedList 
+import mobl::ui::generic
+ 
+sync function addToArray(dest : Array<?>, src : Array<?>, start : Num, end : Num) : Array<?> {
+	foreach (i in range(start, Math.min(end, src.length))) {
+		dest.push(src.get(i));
+	}
+	  
+	return dest;
+}
+
+control genericStagedList(items : Array<?>, ctrl : Control1<?>, listCtrl : Control2<Array<Object>, Control1<?>>, pageSize : Num = 50, loadMoreLabel : String = "Load more items", loadMoreStyle : Style = itemStyle, loadMorePushedStyle : Style = itemPushedStyle, onchange : Callback = null) {
+	
+	var desiredRange : Num = pageSize
+	var currentItems : Array<Object> = null
+	
+	when (items) { 
+		script {
+			desiredRange = pageSize;
+			var newItems = Array<Object>();
+			currentItems = addToArray(newItems, items, 0, desiredRange);
+			if (onchange) {
+				onchange(null);
+			}
+		}
+	} 
+	
+	listCtrl(currentItems, ctrl) 
+	
+	when (currentItems.length < items.length) {
+		item(style=mergeStyles([loadMoreStyle, itemDownArrowStyle]), pushedStyle=mergeStyles([loadMorePushedStyle, itemDownArrowStyle]), onclick={ 
+			desiredRange = desiredRange + pageSize;
+			currentItems = addToArray(currentItems, items, currentItems.length, desiredRange);
+			
+			if (onchange) {
+				event.range = desiredRange;
+				onchange(event);
+			}
+		}) {
+			label(loadMoreLabel)
+		}		
+	}
+}

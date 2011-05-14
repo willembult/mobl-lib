@@ -21,13 +21,42 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- */
+ */ 
  
-module mobl::ui::cachingStagedList 
-import mobl::ui::cachingList 
-import mobl::ui::genericStagedList
+module mobl::ui::incrementalList
+
 import mobl::ui::generic
- 
-control cachingStagedList(items : Array<Object>, ctrl : Control1<?>, pageSize : Num = 50, loadMoreLabel : String = "Load more items", loadMoreStyle : Style = itemStyle, loadMorePushedStyle : Style = itemPushedStyle, onchange : Callback = null) {
-	genericStagedList(items, ctrl, cachingList, pageSize, loadMoreLabel, loadMoreStyle, loadMorePushedStyle, onchange)
-}
+import mobl::ui::render
+
+control incrementalList(items : Array<?>, ctrl : Control1<?>) {
+	root@<span></span>
+	
+	var curLength = 0
+	
+	when (items) {
+		script {
+			root.children().remove();
+			curLength = 0;
+		}
+	}
+	
+	// tricking mobl into monitoring changes to items
+	when (items.length || items.length == 0) {
+		script {
+			foreach (i in range(curLength, items.length)) {
+				async {
+					var item = items.get(i);
+					var element = renderControl1(ctrl, item);
+					
+					if (i > 0) {
+						root.children(":nth-child(" + i + ")").after(element);
+					} else {
+						root.prepend(element);
+					}
+				}
+			}
+			
+			curLength = items.length;
+		}
+	}
+} 
