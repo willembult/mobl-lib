@@ -33,30 +33,36 @@ control incrementalList(items : Array<?>, ctrl : Control1<?>) {
 	
 	var curLength = 0
 	
+	function renderItems() : void {
+		foreach (i in range(curLength, items.length)) {
+			async {
+				var item = items.get(i);
+				var element = renderControl1(ctrl, item);
+				
+				if (i > 0) {
+					root.children(":nth-child(" + i + ")").after(element);
+				} else {
+					root.prepend(element);
+				}
+			}
+		}
+		
+		curLength = items.length;
+	}
+	
 	when (items) {
 		script {
 			root.children().remove();
 			curLength = 0;
+			
+			renderItems();
 		}
 	}
 	
 	// tricking mobl into monitoring changes to items
 	when (items.length || items.length == 0) {
 		script {
-			foreach (i in range(curLength, items.length)) {
-				async {
-					var item = items.get(i);
-					var element = renderControl1(ctrl, item);
-					
-					if (i > 0) {
-						root.children(":nth-child(" + i + ")").after(element);
-					} else {
-						root.prepend(element);
-					}
-				}
-			}
-			
-			curLength = items.length;
+			renderItems();
 		}
 	}
 } 

@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
  
- 
+
 /**
  * Sometimes buttons should actually be links (<a href/>), 
  * for example to trigger calls (tel:) or texts (sms:)
@@ -43,34 +43,17 @@ control linkButton(link : String, onclick : Callback = null, style : Style = but
 	var pushed : Bool = false
 	
 	lnk@<a 
-		href="javascript:void(0);" 
-		class=pushed ? pushedStyle : style
+		href="javascript:void(0);"  
+		class=pushed ? pushedStyle : style   
 		
-		ontouchdown={
-			event.preventDefault();
-			pushed = true;
-		}
-		
-		ontouchdrag={
-			if(event.y < 0 || event.y > lnk.outerHeight() || event.x < 0 || event.x > lnk.outerWidth()) {
-		    	pushed = false;
-		    }
-		}
-		
-		ontouchup={
-			if (pushed) {
-				pushed = false;
-				event.preventDefault();
-				
-				if (isTouchDevice()) {
-					lnk.click();
-				}
-			}
-		}
-		
-		onmouseout={
-			if (pushed) {
-				pushed = false;
+		onclick={
+			if ($(event.currentTarget).attr("href") == "javascript:void(0);")
+			{
+				pushed = true;
+			    lnk.trigger("fakeclick");
+			    
+			    sleep(200);
+			    pushed = false;
 			}
 		}
 	>
@@ -80,8 +63,8 @@ control linkButton(link : String, onclick : Callback = null, style : Style = but
 	</a>
 	
 	script {
-		lnk.bind("click", {
-			if (lnk.attr("href") == "javascript:void(0);") {
+		lnk.bind("fakeclick", {
+			if ($(event.currentTarget).attr("href") == "javascript:void(0);") {
 				if (null != onclick ? onclick(event) : true) {
 					// temporarily modifies href to the actual link and fires click
 					$(event.currentTarget).attr("href", link);
@@ -92,7 +75,7 @@ control linkButton(link : String, onclick : Callback = null, style : Style = but
 			
 			pushed = false;
 		});
-	}
+	} 
 }
 
 

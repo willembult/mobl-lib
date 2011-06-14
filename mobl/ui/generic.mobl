@@ -26,7 +26,7 @@ style $textButtonShadowColor = rgb($baseColor.r+100, $baseColor.g+100, $baseColo
 
 
 style loadingStyle {
-  borderRadiusMixin(10px);
+  borderRadiusMixin(10px); 
   background-color: #000;
   color: white;
   font-size: 2em;
@@ -717,28 +717,20 @@ control markableList(items : [(Bool, ?)]) {
   }
 }
 
-screen selectList(title : String, coll : Collection<?>, doneButtonLabel : String = _("Done")) : [?] {
-  var items = Array<(Bool, ?)>()
-  script {
-    foreach(it in coll) {
-      items.push((false, it));
-    }
-  }
+screen selectList(title : String, items : Array<Tuple2<String, ?>>, doneButtonLabel : String = _("Done")) : ? {
   header(title) {
     backButton(onclick={
       return null;
     })
-    button(doneButtonLabel, onclick={
-      var selected = Array<?>();
-      foreach((checked, it) in items) {
-        if(checked) {
-          selected.push(it);
-        }
-      }
-      screen return selected;
-    })
   }
-  markableList(items)
+  
+  list (i in items) {
+  	item(onclick={
+  		screen return i._2;
+  	}) {
+  		label(i._1)
+  	}
+  }
 }
 
 control searchList(Ent : Type<Entity<?>>, masterItem : Control1<?>, detailItem : Control1<?>, resultLimit : Num = 10, searchTermPlaceholder : String = _("Search term")) {

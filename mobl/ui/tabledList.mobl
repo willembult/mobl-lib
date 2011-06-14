@@ -35,10 +35,44 @@ control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArr
 				mergeStyles([pushed ? tabledItemPushedStyle : tabledItemStyle, pushed ? pushedStyle : style, itemArrowStyle]) : 
 		   		mergeStyles([pushed ? tabledItemPushedStyle : tabledItemStyle, pushed ? pushedStyle : style])
 		   		
+		   	onclick = onclick ? {
+			    pushed = true;
+			    sleep(100);
+			    async {
+			      onclick(event);
+			    }
+			    sleep(200);
+			    pushed = false;
+			  } : null
+		   		
 			onswipe=onswipe
+			/*
 			ontouchdown=
 				{
-					event.preventDefault();
+					log("touch down");
+					log(event.isPropagationStopped());
+					el.parent().trigger("touchdown");
+					pushed = onclick ? true : false;
+				}
+				
+			ontouchup=
+				{
+					pushed = false;
+				}*/
+			/*
+			ontouchdrag=
+				{
+					log("touch drag");
+					log(event);
+					el.parent().trigger(event);
+				}
+			
+			ontouchdown=
+				{
+					log("touch down");
+					log(event);
+					el.parent().trigger(event);
+					//event.preventDefault();
 					pushed = onclick ? true : false;
 				} 
 			ontouchup=
@@ -46,21 +80,21 @@ control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArr
 					if(pushed) {
 						pushed = false;
 						onclick(event);
-				}
+					}
 				}
 			onmouseout=
 				{
 					if(pushed) {
 						pushed = false;
     				}
-				}	
+				}	*/
 	>
     	elements()
 	</li>
 }
 
-control tabledItemCell() {	
-	<div class=tabledItemCellStyle>
+control tabledItemCell(style : Style = null) {	
+	<div class=style ? mergeStyles([tabledItemCellStyle, style]) : tabledItemCellStyle>
 		elements()
 	</div>
 }
@@ -128,4 +162,5 @@ style tabledItemPushedStyle:last-child {
 style tabledItemCellStyle {
 	display: inline-block;
 	margin-right: 8px;
+	vertical-align: middle;
 }

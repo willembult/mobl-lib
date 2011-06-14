@@ -58,8 +58,7 @@ var scroller;
 __ns.setupScroller = function(elem) {
 	// when content gets added, update	
 	elem.bind('DOMNodeInserted', function(e) {
-		/*
-		$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
+		/*$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
 			__ns.updateScroller();				
 		});*/
 		
@@ -109,7 +108,9 @@ __ns.updateScroller = function() {
 	setTimeout(function() {
 		if (__ns.updateCount === 1) {
 			if (scroller) {
-				scroller.refresh();
+				setTimeout(function() {
+					scroller.refresh();
+				}, 100);
 			}
 		}
 		

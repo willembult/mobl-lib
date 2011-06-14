@@ -40,13 +40,13 @@ control genericStagedList(items : Array<?>, ctrl : Control1<?>, listCtrl : Contr
 	var currentItems : Array<Object> = null
 	
 	when (items) { 
-		script {
+		script {			
 			desiredRange = pageSize;
 			var newItems = Array<Object>();
 			currentItems = addToArray(newItems, items, 0, desiredRange);
 			if (onchange) {
 				onchange(null);
-			}
+			}  
 		}
 	} 
 	

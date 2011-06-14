@@ -42,81 +42,95 @@ module mobl::ui::gluePanel
 
 import mobl::ui::generic
 
+style gluePanelStyle {}
+
+function updateGluePanels() {
+	setupGluePanel($("." + gluePanelStyle));
+}
+
+// Make the view take up all available height 
+function adjustGluePanelSize(gluePanel : JQuery, topMargin : Num, bottomMargin : Num) {
+	// Safari on iOS hides the address bar only if the page is 
+	// too high to be shown without scrollbar if the bar is showing.
+	
+	// In case the address bar is shown in Safari on iOS, 
+	// window.innerHeight will not return all available space,
+	// but will already take the space taken up by the bar
+	// into consideration.
+	var deviceHeight = 0;
+	
+	if (isIphone()) {
+		if (isPortrait())  {
+			deviceHeight = 416;
+		} else {
+			deviceHeight = 268;
+		}
+	}
+	
+	if (isIpad()) {
+		if (isPortrait()) {
+			deviceHeight = 960;
+		} else {
+			deviceHeight = 704;
+		}
+	}
+	
+	// calculate the height, possibly overriding the innerHeight if the 
+	// known window height is higher
+	var height = Math.max(window.innerHeight - topMargin - bottomMargin, deviceHeight - topMargin - bottomMargin);
+	
+	// set height to be min-height. use min-height instead of 
+	// height as elements might possibly take up more space
+	gluePanel.css("min-height", height + "px");
+	
+	// scroll to top of page to be sure iPhone hides address bar
+	scrollToTop();
+}
+
+function setupGluePanel(gluePanel : JQuery) {
+	// we have to wait for the element to be attached to the DOM tree
+	// in order to see what it's default position is
+	while (!isAttached(gluePanel)) {
+		sleep(50); 
+	}			
+	
+	var spaceAbove : Num = gluePanel.attr("_gluePanelSpaceAbove"); 
+	var spaceBelow : Num = gluePanel.attr("_gluePanelSpaceBelow");
+	
+	// calculate top and bottom margins
+	var topMargin = (spaceAbove == -1) ? gluePanel.offset().top : spaceAbove;
+	var bottomMargin = (spaceBelow == -1) ? getScreen().height() - gluePanel.offset().top - gluePanel.height(): spaceBelow;
+				
+	// set the top in case it was specified.
+	// since we're relatively positioned, the top value is the difference
+	// between the default position and the desired position
+	gluePanel.css("top", topMargin - gluePanel.offset().top);
+	
+	// monitor screen resizes			
+	onScreenResize({adjustGluePanelSize(gluePanel, topMargin, bottomMargin);});
+	
+	// apply height changes
+	adjustGluePanelSize(gluePanel, topMargin, bottomMargin);
+}
+
 
 control gluePanel(style : Style = null, spaceAbove : Num = -1, spaceBelow : Num = -1) {
 	// The view is positioned relatively, so that absolutely positioned children 
 	// will be positioned in this coordinate space
-	view@<div style="width: 100%; position: relative;" class=style ? style : "">elements()</div>
+	view@<div style="width: 100%; position: relative;" class=style ? mergeStyles([style, gluePanelStyle]) : gluePanelStyle> elements() </div>
 	
 	// variable that maintain the vertical margins around the panel
 	var topMargin : Num = 0
 	var bottomMargin : Num = 0
-
-	// Make the view take up all available height 
-	function makeFullScreenHeight() : void {
-		
-		// Safari on iOS hides the address bar only if the page is 
-		// too high to be shown without scrollbar if the bar is showing.
-		
-		// In case the address bar is shown in Safari on iOS, 
-		// window.innerHeight will not return all available space,
-		// but will already take the space taken up by the bar
-		// into consideration.
-		var deviceHeight = 0;
-		
-		if (isIphone()) {
-			if (isPortrait())  {
-				deviceHeight = 416;
-			} else {
-				deviceHeight = 268;
-			}
-		}
-		
-		if (isIpad()) {
-			if (isPortrait()) {
-				deviceHeight = 960;
-			} else {
-				deviceHeight = 704;
-			}
-		}
-		
-		// calculate the height, possibly overriding the innerHeight if the 
-		// known window height is higher
-		var height = Math.max(window.innerHeight - topMargin - bottomMargin, deviceHeight - topMargin - bottomMargin);
-		
-		// set height to be min-height. use min-height instead of 
-		// height as elements might possibly take up more space
-		view.css("min-height", height + "px");
-		
-		// scroll to top of page to be sure iPhone hides address bar
-		scrollToTop(); 
-	}
 	
 	// Make the window full height
-	script { 
+	script {
+		view.attr("_gluePanelSpaceAbove", spaceAbove);
+		view.attr("_gluePanelSpaceBelow", spaceBelow);
+	
 		async {
-			// we have to wait for the element to be attached to the DOM tree
-			// in order to see what it's default position is		
-			while (!isAttached(view)) {
-				sleep(50);
-			}
-			
-			// calculate top and bottom margins
-			topMargin = (spaceAbove == -1) ? view.offset().top : spaceAbove;
-			bottomMargin = (spaceBelow == -1) ? getScreen().height() - view.offset().top - view.height(): spaceBelow;
-						
-			// set the top in case it was specified.
-			// since we're relatively positioned, the top value is the difference
-			// between the default position and the desired position
-			view.css("top", topMargin - view.offset().top);
-			
-			// monitor screen resizes			
-			onScreenResize({makeFullScreenHeight();});
-			
-			// apply height changes
-			makeFullScreenHeight();			
+			setupGluePanel(view);
 		}
-		
 	}
 }
 
@@ -131,8 +145,12 @@ __ns.scrollToTop = function() {
 
 external sync function isAttached(elem : JQuery) : Bool
 <javascript>
-__ns.isAttached = function(elem) {
-	return elem.parents("body").length > 0;
+__ns.isAttached = function(elem) {	
+	var screen = __ns.getScreen();
+	if (screen) {
+		return elem.parents("#" + screen.attr("id")).length > 0;
+	}	
+	return false;
 };
 </javascript>
 
@@ -140,7 +158,11 @@ __ns.isAttached = function(elem) {
 external sync function getScreen() : JQuery
 <javascript>
 __ns.getScreen = function(cb) {
-	return $(mobl.getCurrentScreen().dom);
+	if (mobl.getCurrentScreen()) {
+		return $(mobl.getCurrentScreen().dom);
+	}
+	
+	return null;
 };
 </javascript>
 
