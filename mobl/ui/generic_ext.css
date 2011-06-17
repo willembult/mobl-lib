@@ -33,7 +33,23 @@
    -webkit-transform: translateX(100%);
  }
 }
+@-webkit-keyframes slidedown {
+  from {
+    -webkit-transform: translateY(-100%);
+  }
+  to {
+    -webkit-transform: translateY(0%);
+  }
+}
 
+@-webkit-keyframes slideup {
+  from {
+    -webkit-transform: translateY(0%);
+  }
+  to {
+    -webkit-transform: translateY(-100%);
+  }
+}
 body {
   background-color: #f0f0f0;
   font-family: Arial;
