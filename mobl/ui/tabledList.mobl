@@ -28,69 +28,9 @@ module mobl::ui::tabledList
 import mobl::ui::generic
 
 control tabledItem(onclick : Callback = null, onswipe : Callback = null, hideArrow : Bool = false, style : Style = itemStyle, pushedStyle : Style = itemPushedStyle) {
-	var pushed : Bool = false
-	el@<li	class=mergeStyles([tabledItemStyle, style]) 
-		  	class=
-		  		(onclick && hideArrow == false) ? 
-				mergeStyles([pushed ? tabledItemPushedStyle : tabledItemStyle, pushed ? pushedStyle : style, itemArrowStyle]) : 
-		   		mergeStyles([pushed ? tabledItemPushedStyle : tabledItemStyle, pushed ? pushedStyle : style])
-		   		
-		   	onclick = onclick ? {
-			    pushed = true;
-			    sleep(100);
-			    async {
-			      onclick(event);
-			    }
-			    sleep(200);
-			    pushed = false;
-			  } : null
-		   		
-			onswipe=onswipe
-			/*
-			ontouchdown=
-				{
-					log("touch down");
-					log(event.isPropagationStopped());
-					el.parent().trigger("touchdown");
-					pushed = onclick ? true : false;
-				}
-				
-			ontouchup=
-				{
-					pushed = false;
-				}*/
-			/*
-			ontouchdrag=
-				{
-					log("touch drag");
-					log(event);
-					el.parent().trigger(event);
-				}
-			
-			ontouchdown=
-				{
-					log("touch down");
-					log(event);
-					el.parent().trigger(event);
-					//event.preventDefault();
-					pushed = onclick ? true : false;
-				} 
-			ontouchup=
-				{
-					if(pushed) {
-						pushed = false;
-						onclick(event);
-					}
-				}
-			onmouseout=
-				{
-					if(pushed) {
-						pushed = false;
-    				}
-				}	*/
-	>
-    	elements()
-	</li>
+	item(onclick = onclick, onswipe = onswipe, hideArrow = hideArrow, style = mergeStyles([tabledItemStyle, style]), pushedStyle = mergeStyles([tabledItemPushedStyle, pushedStyle])) {
+		elements()
+	}
 }
 
 control tabledItemCell(style : Style = null) {	
