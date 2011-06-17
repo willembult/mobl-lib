@@ -9,15 +9,11 @@ load js/gestures.js
 
 // These will automatically be loaded
 resource js/jquery-1.4.min.js
-resource js/persistence.js 
+resource js/persistence.js
 resource js/persistence.store.sql.js
 resource js/persistence.store.websql.js
 resource js/persistence.store.memory.js
 resource js/persistence.search.js
-
-// Images
-//resource img/loading.gif
-//resource img/default-icon.png
 
 /**
  * Built-in types
@@ -50,7 +46,10 @@ external type String : Object {
 
 @doc "Numeric type, represents both integers and floating point numbers"
 @persistable
-external type Num : Object { }
+external type Num : Object {
+  sync function toFixed(digitsAfterDecimal : Num = 0) : String
+  sync function toPrecision(digits : Num) : String
+}
 
 @persistable
 external type Bool : Object { }
@@ -72,6 +71,12 @@ external type RegExp : Object {
     sync function test(string : String) : Bool
     static sync function fromString(regex : String) : RegExp
 }
+
+<javascript>
+__ns.Bool = {};
+__ns.Num = {};
+__ns.String = {};
+</javascript>
 
 <javascript for=RegExp>
 __ns.RegExp = {
@@ -874,21 +879,23 @@ var TRANSITION_SPEED = 250;
 __ns.animations = {};
 
 __ns.animations.slide = function(prevNode, nextNode, forward, callback) {
-  nextNode.show();  
+  //nextNode.show('slide', {direction: forward ? 'right' : 'left'}, TRANSITION_SPEED);
+  //prevNode.hide('slide', {direction: forward ? 'left' : 'right'}, TRANSITION_SPEED, callback);
+
+  nextNode.show();
   nextNode.css("-webkit-transform", "translate3d(" + (forward ? "100%" : "-100%") + ",0px,0px)");
-  
+
   setTimeout(function() {
     nextNode.css({"-webkit-transition-duration": TRANSITION_SPEED + "ms", "-webkit-transition-timing-function": "ease-in-out"});
     prevNode.css({"-webkit-transition-duration": TRANSITION_SPEED + "ms", "-webkit-transition-timing-function": "ease-in-out"});
     nextNode.css("-webkit-transform", "translate3d(0px,0px,0px)");
     prevNode.css("-webkit-transform", "translate3d(" + (forward ? "-100%" : "100%") + ",0px,0px)");
-            
+
     setTimeout(function() {
-  	  prevNode.hide();
-  	  nextNode.css({"-webkit-transition-duration": null, "-webkit-transition-timing-function": null});
+      prevNode.hide();
+      nextNode.css({"-webkit-transition-duration": null, "-webkit-transition-timing-function": null});
       prevNode.css({"-webkit-transition-duration": null, "-webkit-transition-timing-function": null});
-    
-  	  callback();
+      callback();
     }, TRANSITION_SPEED);
   }, 5);
 };
@@ -928,31 +935,24 @@ setInterval(function() {
   }
 }, 250);
 
-/*
- * screenTransitionLock holds the name of the last screen transitioning in/out
- * A new screen can always be called (for auto-loading screens),
- * but when the same screen is requested twice in a row (while still processing)
- * the request is discarded to avoid corrupting the screen context.
- */
-__ns.screenTransitionLock = null;
 
-__ns.acquireScreenTransitionLock = function(resource) {
-	if (__ns.screenTransitionLock === resource) {
-		return false;
-	}
-	
-	__ns.screenTransitionLock = resource;
-	return true;
+__ns.screenTransitionLock = false;
+
+__ns.acquireScreenTransitionLock = function() {
+    if (__ns.screenTransitionLock === true)
+        return false;
+    __ns.screenTransitionLock = true;
+    return true;
 };
 
 $("html").bind("screenTransitionEnded", function() {
-	__ns.screenTransitionLock = null;
+    __ns.screenTransitionLock = false;
 });
 
 __ns.call = function (screenName, args, callback) {
-	if (!__ns.acquireScreenTransitionLock(screenName))
-    		return false;
-    	
+    if (!__ns.acquireScreenTransitionLock()) {
+       return false;
+    }
     var replace = args[args.length-2].get();
     var animate = args[args.length-1].get();
     args.splice(args.length-2, 2);
@@ -973,32 +973,32 @@ __ns.call = function (screenName, args, callback) {
     screenContext.screens.push(screenFrame);
     // Called on "screen return"
     var callbackFn = function () {
-    	if (!__ns.acquireScreenTransitionLock(screenName))
-    		return false;
-    	
-        // when callback function is called (i.e. screen return)
-        screenFrame.subs.unsubscribe();
-        screenContext.screens.pop();
-        if(screenFrame.dom.find("div.screenContext").length > 0) { // pop context
-          mobl.contextStack.pop();
-        }
-        mobl.delayedUpdateScrollers();
-        var domNode;
-        if (screenContext.screens.length > 0) {
-            var previousScreen = screenContext.screens[screenContext.screens.length - 1];
-            domNode = previousScreen.dom;
-            scrollTo(0, previousScreen.pageYOffset);
-        } else {
-          domNode = screenContext.initialElements;
-          scrollTo(0, 0);
-        }
-        __ns.animations[animate](screenFrame.dom, domNode, false, function() {
-          screenFrame.dom.remove();
-          domNode.trigger("screenTransitionEnded");
-        });
-        if (callback) {
-            callback.apply(null, arguments);
-        }
+      if (!__ns.acquireScreenTransitionLock()) {
+         return false;
+      }
+      // when callback function is called (i.e. screen return)
+      screenFrame.subs.unsubscribe();
+      screenContext.screens.pop();
+      if(screenFrame.dom.find("div.screenContext").length > 0) { // pop context
+        mobl.contextStack.pop();
+      }
+      mobl.delayedUpdateScrollers();
+      var domNode;
+      if (screenContext.screens.length > 0) {
+          var previousScreen = screenContext.screens[screenContext.screens.length - 1];
+          domNode = previousScreen.dom;
+          scrollTo(0, previousScreen.pageYOffset);
+      } else {
+        domNode = screenContext.initialElements;
+        scrollTo(0, 0);
+      }
+      __ns.animations[animate](screenFrame.dom, domNode, false, function() {
+        screenFrame.dom.remove();
+        domNode.trigger("screenTransitionEnded");
+      });
+      if (callback) {
+          callback.apply(null, arguments);
+      }
     };
     screenFrame.callbackFn = callbackFn;
 

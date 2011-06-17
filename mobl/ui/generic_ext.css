@@ -34,29 +34,12 @@
  }
 }
 
-@-webkit-keyframes slidedown {
-  from {
-    -webkit-transform: translateY(-100%);
-  }
-  to {
-    -webkit-transform: translateY(0%);
-  }
-}
-
-@-webkit-keyframes slideup {
-  from {
-    -webkit-transform: translateY(0%);
-  }
-  to {
-    -webkit-transform: translateY(-100%);
-  }
-}
 body {
   background-color: #f0f0f0;
-  font-family: Helvetica;
+  font-family: Arial;
   margin: 0;
   padding: 0;
-  /*height: 640px;*/
+  height: 640px;
   -webkit-user-select: none;
   /*-webkit-text-size-adjust: none;*/
   -webkit-user-select: none;

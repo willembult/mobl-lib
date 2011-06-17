@@ -56,6 +56,7 @@ persistence.search.config = function(persistence, dialect) {
    * Does extremely basic tokenizing of text. Also includes some basic stemming.
    */
   function searchTokenizer(text) {
+    text = text || '';
     var words = text.toLowerCase().split(/[^\w\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+/);
     var wordDict = {};
     // Prefixing words with _ to also index Javascript keywords and special fiels like 'constructor'
@@ -185,7 +186,13 @@ persistence.search.config = function(persistence, dialect) {
   };
 
   SearchQueryCollection.prototype.order = function() {
-    throw new Error("Imposing additional orderings is not support for search query collections.");
+    // Bit clumbsy: remove the order by clause based on match
+    for(var i = 0; i < this._additionalGroupSqls.length; i++) {
+      if(this._additionalGroupSqls[i].indexOf('ORDER BY') !== -1) {
+        this._additionalGroupSqls.splice(i, 1);
+      }
+    }
+    return persistence.DbQueryCollection.prototype.order.apply(this, arguments);
   };
 
   /*
