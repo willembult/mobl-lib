@@ -289,21 +289,21 @@ control item(style : Style = itemStyle, pushedStyle : Style = itemPushedStyle, o
     sleep(200);
     pushed = false;
   } : null
-  ontouchdown = {
+  ontouchdown=onclick ? {
   	touched = true;
   	sleep(200);
   	if (touched) {
   		pushed = true;
   	}
-  }
-  ontouchup = {
+  } : null
+  ontouchup=onclick ? {
   	touched = false;
   	pushed = false; 
-  }
-  ontouchdrag = {
+  } : null
+  ontouchdrag=onclick ? {
   	touched = false;
   	pushed = false; 
-  }
+  } : null
   >
     elements()
   </li>
