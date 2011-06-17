@@ -279,16 +279,32 @@ style itemDownArrowStyle {
 
 control item(style : Style = itemStyle, pushedStyle : Style = itemPushedStyle, onclick : Callback = null, onswipe : Callback = null, hideArrow : Bool = false) {
   var pushed = false
+  var touched = false
   el@<li class=itemStyle class=onclick && hideArrow == false ? mergeStyles([pushed ? pushedStyle : style, itemArrowStyle]) : (pushed ? pushedStyle : style)
   onswipe=onswipe onclick=onclick ? {
-    pushed = true;
-    sleep(100);
+  	pushed = true;
     async {
       onclick(event);
     }
     sleep(200);
     pushed = false;
-  } : null>
+  } : null
+  ontouchdown = {
+  	touched = true;
+  	sleep(200);
+  	if (touched) {
+  		pushed = true;
+  	}
+  }
+  ontouchup = {
+  	touched = false;
+  	pushed = false; 
+  }
+  ontouchdrag = {
+  	touched = false;
+  	pushed = false; 
+  }
+  >
     elements()
   </li>
 }
