@@ -47,6 +47,8 @@ control linkButton(link : String, onclick : Callback = null, style : Style = but
 		class=pushed ? pushedStyle : style   
 		
 		onclick={
+			event.stopPropagation();
+			
 			if ($(event.currentTarget).attr("href") == "javascript:void(0);")
 			{
 				pushed = true;
