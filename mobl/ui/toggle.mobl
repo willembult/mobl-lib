@@ -32,13 +32,11 @@ control toggle(val : Bool, cb : Callback = null) {
 	
 	el@<span class=toggleStyle onclick={
 		val = !val;
+		if (cb) {
+			cb(val);
+		}
 		
-		el.css("background-position-x", val ? "0px" : "-95px");		
-		el.bind("webkitTransitionEnd", {
-			if (cb) {
-				cb(val); 
-			}			
-		});
+		el.css("background-position-x", val ? "0px" : "-95px");
 	}
 	
 	ontouchdown={
@@ -81,6 +79,6 @@ style toggleStyle {
 	background: url($data(mobl/ui/generic/iphone-switch-yesno.png)) no-repeat center;
 	
 	-webkit-transition-property: background-position-x;
-	-webkit-transition-duration: 0.2s;
+	-webkit-transition-duration: 100ms;
 	-webkit-transition-timing-function: linear;
 }
