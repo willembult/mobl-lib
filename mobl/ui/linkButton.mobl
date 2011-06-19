@@ -23,73 +23,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
  
-
-/**
- * Sometimes buttons should actually be links (<a href/>), 
- * for example to trigger calls (tel:) or texts (sms:)
- * However, when making them look like buttons, with touch 
- * effects, click event handlers do not get called anymore 
- * on touch devices. 
- *
- * This control triggers an additional click event when needed.
- * It also allows for cancellation of the click by returning false
- * in the onclick callback.
- */
-
 module mobl::ui::linkButton
 import mobl::ui::generic
 
 control linkButton(link : String, onclick : Callback = null, style : Style = buttonStyle, pushedStyle : Style = buttonPushedStyle) {
 	var pushed : Bool = false
 	
-	lnk@<a 
-		href="javascript:void(0);"  
-		class=pushed ? pushedStyle : style   
-		
-		onclick={
-			event.stopPropagation();
-			
-			if ($(event.currentTarget).attr("href") == "javascript:void(0);")
-			{
-				pushed = true;
-			    lnk.trigger("fakeclick");
-			    
-			    sleep(200);
-			    pushed = false;
-			}
-		}
-	>
-			
+	lnk@<a href=link class=pushed ? pushedStyle : style 
+	ontouchdown={
+		pushed = true;	
+	}	
+	ontouchdrag={
+		pushed = false;
+	}	
+	ontouchup={
+		pushed = false;
+	}
+	> 
 		elements()
-				
 	</a>
 	
 	script {
-		lnk.bind("fakeclick", {
-			if ($(event.currentTarget).attr("href") == "javascript:void(0);") {
-				if (null != onclick ? onclick(event) : true) {
-					// temporarily modifies href to the actual link and fires click
-					$(event.currentTarget).attr("href", link);
-					fireMouseEvent(event.currentTarget, "click");		
-					$(event.currentTarget).attr("href","javascript:void(0);");
-				}
+		lnk.click({
+			async {
+				pushed = false;
 			}
-			
-			pushed = false;
+			onclick(event);			
 		});
 	} 
+	
 }
-
-
-external sync function fireMouseEvent(el : Dynamic, ev : String) : void
-<javascript>
-__ns.fireMouseEvent = function(el, ev) {
-	if ( document.createEvent ) {
-		var evObj = document.createEvent('MouseEvents');
-		evObj.initEvent( ev, true, false );
-		el.dispatchEvent(evObj);
-	} else if( document.createEventObject ) {
-		el.fireEvent('on'+ev);
-    }                        
-};
-</javascript>
