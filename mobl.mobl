@@ -1002,8 +1002,8 @@ __ns.call = function (screenName, args, callback) {
         scrollTo(0, 0);
       }
       __ns.animations[animate](screenFrame.dom, domNode, false, function() {
-        screenFrame.dom.remove();
         domNode.trigger("screenTransitionEnded");
+        screenFrame.dom.remove();  
         if (callback) {
             callback.apply(null, arguments);
         }
