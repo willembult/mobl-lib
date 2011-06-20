@@ -38,7 +38,7 @@ load js/iscroll-lite-min.js
 control scroller() {
 	// Use a glue panel to take up all available space
 	gluePanel() {
-		scrl@<div style="position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px; overflow: auto;">elements()</div>
+		scrl@<div style="position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px; overflow-x: hidden; overflow-y: auto;">elements()</div>
 		
 		script {     
 			async {
