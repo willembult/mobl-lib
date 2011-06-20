@@ -1003,11 +1003,11 @@ __ns.call = function (screenName, args, callback) {
       }
       __ns.animations[animate](screenFrame.dom, domNode, false, function() {
         domNode.trigger("screenTransitionEnded");
-        screenFrame.dom.remove();  
-        if (callback) {
-            callback.apply(null, arguments);
-        }
+        screenFrame.dom.remove();
       });
+      if (callback) {
+        callback.apply(null, arguments);
+      }
     };
     screenFrame.callbackFn = callbackFn;
 
