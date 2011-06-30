@@ -32,30 +32,30 @@
 module mobl::ui::scroller
 import mobl::ui::gluePanel
 
-load js/jquery-watch.js
-load js/iscroll-lite-min.js 
+load js/jquery-watch.js 
+load js/iscroll.js 
 
-control scroller() {
+control scroller(snapToItems : Bool = false, onRefresh : Callback = null) {
 	// Use a glue panel to take up all available space
-	gluePanel() {
+	gluePanel() {     
 		scrl@<div style="position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px; overflow-x: hidden; overflow-y: auto;">elements()</div>
 		
 		script {     
 			async {
-				setupScroller(scrl); 
+				setupScroller(scrl, snapToItems, onRefresh); 
 			}
 		}
 	}
 }
 
-external sync function setupScroller(elem : JQuery) : void
+external sync function setupScroller(elem : JQuery, snapToItems : Bool = null, onpulldown : Callback = null) : void
 external sync function scrollTo(x : Num, y : Num, delay : Num, relative : Bool) : void
 external sync function updateScroller() : void
 external sync function destroyScroller() : void
 <javascript>
 var scroller;
 
-__ns.setupScroller = function(elem) {
+__ns.setupScroller = function(elem, snap, onpulldown) {
 	// when content gets added, update	
 	elem.bind('DOMNodeInserted', function(e) {
 		/*$(e.target).watch("top,left,height,width,display,opacity", function (data, i) {
@@ -86,15 +86,13 @@ __ns.setupScroller = function(elem) {
 		
 	setTimeout(function() {
 		scroller = new iScroll(elem[0], {
-			hScroll: false
+			hScroll: false,
 			
-			/* 
-			snap: "li"
+			snap: snap ? "li" : null,
 			pullToRefresh: onpulldown ? "down" : false,
-			onPullDown: function() {
-				$(".iScrollPullDownIcon").append(icon).append("<span>  </span>");
-				onpulldown(event);
-			 }*/
+			onPullDown: function(event) {
+				onpulldown();
+			}
 		});
 		
 		elem.children().last()[0].iscroll = scroller;
@@ -110,12 +108,12 @@ __ns.updateScroller = function() {
 			if (scroller) {
 				setTimeout(function() {
 					scroller.refresh();
-				}, 100);
+				}, 0);
 			}
 		}
 		
 		__ns.updateCount--;
-	}, 250);
+	}, 100);
 };
 
 __ns.scrollTo = function(x, y, delay, relative) {
