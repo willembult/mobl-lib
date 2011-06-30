@@ -876,11 +876,21 @@ mobl.findDeepestVisibleContext = function() {
 
 var TRANSITION_SPEED = 250;
 
+
+__ns.animationActiveNode = null;
 __ns.animations = {};
 
 __ns.animations.slide = function(prevNode, nextNode, forward, callback) {
   //nextNode.show('slide', {direction: forward ? 'right' : 'left'}, TRANSITION_SPEED);
   //prevNode.hide('slide', {direction: forward ? 'left' : 'right'}, TRANSITION_SPEED, callback);
+
+  // if an animation is still active, the required webkitTransitionEnd event
+  // won't get fired anymore after we start a new one, so trigger it manually.
+  if (__ns.animationActiveNode) {
+      __ns.animationActiveNode.trigger("webkitTransitionEnd");
+  }
+ 
+  __ns.animationActiveNode = prevNode;
 
   nextNode.css("-webkit-transform", "translate3d(" + (forward ? "100%" : "-100%") + ",0px,0px)");
   nextNode.css("-webkit-transition-duration", TRANSITION_SPEED + "ms");
@@ -893,6 +903,7 @@ __ns.animations.slide = function(prevNode, nextNode, forward, callback) {
     prevNode.css("-webkit-transform", "translate3d(" + (forward ? "-100%" : "100%") + ",0px,0px)");
     
     prevNode.bind("webkitTransitionEnd", function() {
+      __ns.animationActiveNode = null;
       prevNode.unbind("webkitTransitionEnd");
       prevNode.hide();
       nextNode.css({"-webkit-transition-duration": null, "-webkit-transition-timing-function": null});
@@ -1003,6 +1014,7 @@ __ns.call = function (screenName, args, callback) {
       }
       __ns.animations[animate](screenFrame.dom, domNode, false, function() {
         domNode.trigger("screenTransitionEnded");
+        screenFrame.dom.remove();
       });
       if (callback) {
         callback.apply(null, arguments);
