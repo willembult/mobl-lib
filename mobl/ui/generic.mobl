@@ -141,7 +141,7 @@ style headerStyle buttonPushedStyle {
 control button(text : String, style : Style = buttonStyle, pushedStyle : Style = buttonPushedStyle, onclick : Callback = {}) {
   var pushed = false
   sp@<span class=pushed ? pushedStyle : style ontouchdown={
-    event.preventDefault();
+  	event.preventDefault();
     pushed = true;
   }
   ontouchdrag={
@@ -286,12 +286,12 @@ control item(style : Style = itemStyle, pushedStyle : Style = itemPushedStyle, o
     async {
       onclick(event);
     }
-    sleep(200);
+    sleep(100);
     pushed = false;
   } : null
   ontouchdown=onclick ? {
   	touched = true;
-  	sleep(200);
+  	sleep(100);
   	if (touched) {
   		pushed = true;
   	}
