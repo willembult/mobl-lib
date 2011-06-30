@@ -34,8 +34,8 @@ control incrementalList(items : Array<?>, ctrl : Control1<?>) {
 	var curLength = 0
 	
 	function renderItems() : void {
-		foreach (i in range(curLength, items.length)) {
-			async {
+		async {
+			foreach (i in range(curLength, items.length)) {
 				var item = items.get(i);
 				var element = renderControl1(ctrl, item);
 				
@@ -44,6 +44,7 @@ control incrementalList(items : Array<?>, ctrl : Control1<?>) {
 				} else {
 					root.prepend(element);
 				}
+				sleep(110);
 			}
 		}
 		
